@@ -53,9 +53,7 @@ def _red(s: str) -> str:
 
 
 def _colornum(n: int) -> str:
-    if n == 0:
-        return _green(str(n))
-    return _red(str(n))
+    return _green(str(n)) if n == 0 else _red(str(n))
 
 
 class _PyVersionAction(argparse.Action):

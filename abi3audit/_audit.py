@@ -36,7 +36,7 @@ class AuditResult:
 
     def is_abi3_baseline_compatible(self) -> bool:
         # TODO(ww): Why does PyVersion.__le__ not typecheck as bool?
-        return bool(self.baseline >= self.computed)
+        return self.baseline >= self.computed
 
     def json(self) -> dict[str, Any]:
         return {

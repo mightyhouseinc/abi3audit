@@ -6,7 +6,9 @@ from enum import Enum
 
 
 if getattr(kaitaistruct, 'API_VERSION', (0, 9)) < (0, 9):
-    raise Exception("Incompatible Kaitai Struct Python API: 0.9 or later is required, but you have %s" % (kaitaistruct.__version__))
+    raise Exception(
+        f"Incompatible Kaitai Struct Python API: 0.9 or later is required, but you have {kaitaistruct.__version__}"
+    )
 
 from . import asn1_der
 class MachO(KaitaiStruct):
@@ -116,8 +118,10 @@ class MachO(KaitaiStruct):
         self.magic = KaitaiStream.resolve_enum(MachO.MagicType, self._io.read_u4be())
         self.header = MachO.MachHeader(self._io, self, self._root)
         self.load_commands = []
-        for i in range(self.header.ncmds):
-            self.load_commands.append(MachO.LoadCommand(self._io, self, self._root))
+        self.load_commands.extend(
+            MachO.LoadCommand(self._io, self, self._root)
+            for _ in range(self.header.ncmds)
+        )
 
 
     class RpathCommand(KaitaiStruct):
@@ -302,9 +306,10 @@ class MachO(KaitaiStruct):
                 _pos = self._io.pos()
                 self._io.seek(((self.hash_offset - 8) - (self.hash_size * self.n_special_slots)))
                 self._m_hashes = []
-                for i in range((self.n_special_slots + self.n_code_slots)):
-                    self._m_hashes.append(self._io.read_bytes(self.hash_size))
-
+                self._m_hashes.extend(
+                    self._io.read_bytes(self.hash_size)
+                    for _ in range((self.n_special_slots + self.n_code_slots))
+                )
                 self._io.seek(_pos)
                 return getattr(self, '_m_hashes', None)
 
@@ -332,8 +337,10 @@ class MachO(KaitaiStruct):
             def _read(self):
                 self.count = self._io.read_u4be()
                 self.blobs = []
-                for i in range(self.count):
-                    self.blobs.append(MachO.CsBlob.BlobIndex(self._io, self, self._root))
+                self.blobs.extend(
+                    MachO.CsBlob.BlobIndex(self._io, self, self._root)
+                    for _ in range(self.count)
+                )
 
 
 
@@ -609,8 +616,10 @@ class MachO(KaitaiStruct):
             def _read(self):
                 self.count = self._io.read_u4be()
                 self.items = []
-                for i in range(self.count):
-                    self.items.append(MachO.CsBlob.RequirementsBlobIndex(self._io, self, self._root))
+                self.items.extend(
+                    MachO.CsBlob.RequirementsBlobIndex(self._io, self, self._root)
+                    for _ in range(self.count)
+                )
 
 
 
@@ -679,8 +688,10 @@ class MachO(KaitaiStruct):
             self.sdk = self._io.read_u4le()
             self.ntools = self._io.read_u4le()
             self.tools = []
-            for i in range(self.ntools):
-                self.tools.append(MachO.BuildVersionCommand.BuildToolVersion(self._io, self, self._root))
+            self.tools.extend(
+                MachO.BuildVersionCommand.BuildToolVersion(self._io, self, self._root)
+                for _ in range(self.ntools)
+            )
 
 
         class BuildToolVersion(KaitaiStruct):
@@ -974,8 +985,10 @@ class MachO(KaitaiStruct):
         def _read(self):
             self.num_strings = self._io.read_u4le()
             self.strings = []
-            for i in range(self.num_strings):
-                self.strings.append((self._io.read_bytes_term(0, False, True, True)).decode(u"utf-8"))
+            self.strings.extend(
+                (self._io.read_bytes_term(0, False, True, True)).decode(u"utf-8")
+                for _ in range(self.num_strings)
+            )
 
 
 
@@ -997,8 +1010,10 @@ class MachO(KaitaiStruct):
             self.nsects = self._io.read_u4le()
             self.flags = self._io.read_u4le()
             self.sections = []
-            for i in range(self.nsects):
-                self.sections.append(MachO.SegmentCommand64.Section64(self._io, self, self._root))
+            self.sections.extend(
+                MachO.SegmentCommand64.Section64(self._io, self, self._root)
+                for _ in range(self.nsects)
+            )
 
 
         class Section64(KaitaiStruct):
@@ -1179,71 +1194,36 @@ class MachO(KaitaiStruct):
                 _pos = io.pos()
                 io.seek(self.offset)
                 _on = self.sect_name
-                if _on == u"__objc_nlclslist":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_methname":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.StringList(_io__raw__m_data, self, self._root)
-                elif _on == u"__nl_symbol_ptr":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__la_symbol_ptr":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_selrefs":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__cstring":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.StringList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_classlist":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_protolist":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_imageinfo":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_methtype":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.StringList(_io__raw__m_data, self, self._root)
-                elif _on == u"__cfstring":
+                if _on == u"__cfstring":
                     self._raw__m_data = io.read_bytes(self.size)
                     _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
                     self._m_data = MachO.SegmentCommand64.Section64.CfStringList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_classrefs":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_protorefs":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_classname":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.StringList(_io__raw__m_data, self, self._root)
-                elif _on == u"__got":
-                    self._raw__m_data = io.read_bytes(self.size)
-                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
-                    self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
                 elif _on == u"__eh_frame":
                     self._raw__m_data = io.read_bytes(self.size)
                     _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
                     self._m_data = MachO.SegmentCommand64.Section64.EhFrame(_io__raw__m_data, self, self._root)
-                elif _on == u"__objc_superrefs":
+                elif _on in [
+                    u"__objc_methname",
+                    u"__cstring",
+                    u"__objc_methtype",
+                    u"__objc_classname",
+                ]:
+                    self._raw__m_data = io.read_bytes(self.size)
+                    _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
+                    self._m_data = MachO.SegmentCommand64.Section64.StringList(_io__raw__m_data, self, self._root)
+                elif _on in [
+                    u"__objc_nlclslist",
+                    u"__nl_symbol_ptr",
+                    u"__la_symbol_ptr",
+                    u"__objc_selrefs",
+                    u"__objc_classlist",
+                    u"__objc_protolist",
+                    u"__objc_imageinfo",
+                    u"__objc_classrefs",
+                    u"__objc_protorefs",
+                    u"__got",
+                    u"__objc_superrefs",
+                ]:
                     self._raw__m_data = io.read_bytes(self.size)
                     _io__raw__m_data = KaitaiStream(BytesIO(self._raw__m_data))
                     self._m_data = MachO.SegmentCommand64.Section64.PointerList(_io__raw__m_data, self, self._root)
@@ -1309,9 +1289,9 @@ class MachO(KaitaiStruct):
             _pos = io.pos()
             io.seek(self.indirect_sym_off)
             self._m_indirect_symbols = []
-            for i in range(self.n_indirect_syms):
-                self._m_indirect_symbols.append(io.read_u4le())
-
+            self._m_indirect_symbols.extend(
+                io.read_u4le() for _ in range(self.n_indirect_syms)
+            )
             io.seek(_pos)
             return getattr(self, '_m_indirect_symbols', None)
 
@@ -1330,7 +1310,10 @@ class MachO(KaitaiStruct):
             self.ncmds = self._io.read_u4le()
             self.sizeofcmds = self._io.read_u4le()
             self.flags = self._io.read_u4le()
-            if  ((self._root.magic == MachO.MagicType.macho_be_x64) or (self._root.magic == MachO.MagicType.macho_le_x64)) :
+            if self._root.magic in [
+                MachO.MagicType.macho_be_x64,
+                MachO.MagicType.macho_le_x64,
+            ]:
                 self.reserved = self._io.read_u4le()
 
 
@@ -1403,7 +1386,10 @@ class MachO(KaitaiStruct):
             self.cryptoff = self._io.read_u4le()
             self.cryptsize = self._io.read_u4le()
             self.cryptid = self._io.read_u4le()
-            if  ((self._root.magic == MachO.MagicType.macho_be_x64) or (self._root.magic == MachO.MagicType.macho_le_x64)) :
+            if self._root.magic in [
+                MachO.MagicType.macho_be_x64,
+                MachO.MagicType.macho_le_x64,
+            ]:
                 self.pad = self._io.read_u4le()
 
 
@@ -1477,7 +1463,14 @@ class MachO(KaitaiStruct):
 
             def _read(self):
                 self.opcode_and_immediate = self._io.read_u1()
-                if  ((self.opcode == MachO.DyldInfoCommand.BindOpcode.set_dylib_ordinal_uleb) or (self.opcode == MachO.DyldInfoCommand.BindOpcode.set_append_sleb) or (self.opcode == MachO.DyldInfoCommand.BindOpcode.set_segment_and_offset_uleb) or (self.opcode == MachO.DyldInfoCommand.BindOpcode.add_address_uleb) or (self.opcode == MachO.DyldInfoCommand.BindOpcode.do_bind_add_address_uleb) or (self.opcode == MachO.DyldInfoCommand.BindOpcode.do_bind_uleb_times_skipping_uleb)) :
+                if self.opcode in [
+                    MachO.DyldInfoCommand.BindOpcode.set_dylib_ordinal_uleb,
+                    MachO.DyldInfoCommand.BindOpcode.set_append_sleb,
+                    MachO.DyldInfoCommand.BindOpcode.set_segment_and_offset_uleb,
+                    MachO.DyldInfoCommand.BindOpcode.add_address_uleb,
+                    MachO.DyldInfoCommand.BindOpcode.do_bind_add_address_uleb,
+                    MachO.DyldInfoCommand.BindOpcode.do_bind_uleb_times_skipping_uleb,
+                ]:
                     self.uleb = MachO.Uleb128(self._io, self, self._root)
 
                 if self.opcode == MachO.DyldInfoCommand.BindOpcode.do_bind_uleb_times_skipping_uleb:
@@ -1541,7 +1534,13 @@ class MachO(KaitaiStruct):
 
                 def _read(self):
                     self.opcode_and_immediate = self._io.read_u1()
-                    if  ((self.opcode == MachO.DyldInfoCommand.RebaseData.Opcode.set_segment_and_offset_uleb) or (self.opcode == MachO.DyldInfoCommand.RebaseData.Opcode.add_address_uleb) or (self.opcode == MachO.DyldInfoCommand.RebaseData.Opcode.do_rebase_uleb_times) or (self.opcode == MachO.DyldInfoCommand.RebaseData.Opcode.do_rebase_add_address_uleb) or (self.opcode == MachO.DyldInfoCommand.RebaseData.Opcode.do_rebase_uleb_times_skipping_uleb)) :
+                    if self.opcode in [
+                        MachO.DyldInfoCommand.RebaseData.Opcode.set_segment_and_offset_uleb,
+                        MachO.DyldInfoCommand.RebaseData.Opcode.add_address_uleb,
+                        MachO.DyldInfoCommand.RebaseData.Opcode.do_rebase_uleb_times,
+                        MachO.DyldInfoCommand.RebaseData.Opcode.do_rebase_add_address_uleb,
+                        MachO.DyldInfoCommand.RebaseData.Opcode.do_rebase_uleb_times_skipping_uleb,
+                    ]:
                         self.uleb = MachO.Uleb128(self._io, self, self._root)
 
                     if self.opcode == MachO.DyldInfoCommand.RebaseData.Opcode.do_rebase_uleb_times_skipping_uleb:
@@ -1577,9 +1576,10 @@ class MachO(KaitaiStruct):
                 self.terminal_size = MachO.Uleb128(self._io, self, self._root)
                 self.children_count = self._io.read_u1()
                 self.children = []
-                for i in range(self.children_count):
-                    self.children.append(MachO.DyldInfoCommand.ExportNode.Child(self._io, self, self._root))
-
+                self.children.extend(
+                    MachO.DyldInfoCommand.ExportNode.Child(self._io, self, self._root)
+                    for _ in range(self.children_count)
+                )
                 self.terminal = self._io.read_bytes(self.terminal_size.value)
 
             class Child(KaitaiStruct):
@@ -1741,8 +1741,10 @@ class MachO(KaitaiStruct):
             self.nsects = self._io.read_u4le()
             self.flags = self._io.read_u4le()
             self.sections = []
-            for i in range(self.nsects):
-                self.sections.append(MachO.SegmentCommand.Section(self._io, self, self._root))
+            self.sections.extend(
+                MachO.SegmentCommand.Section(self._io, self, self._root)
+                for _ in range(self.nsects)
+            )
 
 
         class Section(KaitaiStruct):
@@ -2074,17 +2076,12 @@ class MachO(KaitaiStruct):
             _pos = io.pos()
             io.seek(self.sym_off)
             self._m_symbols = []
-            for i in range(self.n_syms):
+            for _ in range(self.n_syms):
                 _on = self._root.magic
-                if _on == MachO.MagicType.macho_le_x64:
+                if _on in [MachO.MagicType.macho_le_x64, MachO.MagicType.macho_be_x64]:
                     self._m_symbols.append(MachO.SymtabCommand.Nlist64(io, self, self._root))
-                elif _on == MachO.MagicType.macho_be_x64:
-                    self._m_symbols.append(MachO.SymtabCommand.Nlist64(io, self, self._root))
-                elif _on == MachO.MagicType.macho_le_x86:
+                elif _on in [MachO.MagicType.macho_le_x86, MachO.MagicType.macho_be_x86]:
                     self._m_symbols.append(MachO.SymtabCommand.Nlist(io, self, self._root))
-                elif _on == MachO.MagicType.macho_be_x86:
-                    self._m_symbols.append(MachO.SymtabCommand.Nlist(io, self, self._root))
-
             io.seek(_pos)
             return getattr(self, '_m_symbols', None)
 

@@ -139,13 +139,12 @@ class WheelExtractor:
 
     def __iter__(self) -> Iterator[_object.SharedObject]:
         status.update(f"{self}: collecting shared objects")
-        with TemporaryDirectory() as td, ZipFile(self.path, "r") as zf:
+        with (TemporaryDirectory() as td, ZipFile(self.path, "r") as zf):
             exploded_path = Path(td)
             zf.extractall(exploded_path)
 
             for so_path in _glob_all_objects(exploded_path):
-                child = SharedObjectExtractor(SharedObjectSpec(so_path), parent=self)
-                yield from child
+                yield from SharedObjectExtractor(SharedObjectSpec(so_path), parent=self)
 
     def __str__(self) -> str:
         return self.path.name
@@ -254,7 +253,7 @@ class PyPIExtractor:
                     console.log(f"[red]:skull: {self}: {exc}")
                     continue
 
-                if not any(t.abi == "abi3" for t in tagset):
+                if all(t.abi != "abi3" for t in tagset):
                     logger.debug(f"skipping non-abi3 wheel: {dist['filename']}")
                     continue
 
@@ -264,8 +263,7 @@ class PyPIExtractor:
                     wheel_path = Path(td) / dist["filename"]
                     wheel_path.write_bytes(resp.content)
 
-                    child = WheelExtractor(WheelSpec(wheel_path), parent=self)
-                    yield from child
+                    yield from WheelExtractor(WheelSpec(wheel_path), parent=self)
 
     def __str__(self) -> str:
         return self.spec

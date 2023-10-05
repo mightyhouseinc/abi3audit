@@ -6,7 +6,9 @@ from enum import Enum
 
 
 if getattr(kaitaistruct, 'API_VERSION', (0, 9)) < (0, 9):
-    raise Exception("Incompatible Kaitai Struct Python API: 0.9 or later is required, but you have %s" % (kaitaistruct.__version__))
+    raise Exception(
+        f"Incompatible Kaitai Struct Python API: 0.9 or later is required, but you have {kaitaistruct.__version__}"
+    )
 
 class Asn1Der(KaitaiStruct):
     """ASN.1 (Abstract Syntax Notation One) DER (Distinguished Encoding

@@ -39,10 +39,11 @@ class _SharedObjectBase:
             # Multiple tagsets can be marked as abi3; when this happens,
             # we select the highest interpreter version.
             tagset = self._extractor.parent.tagset
-            pyversions = [
-                PyVersion.parse_python_tag(t.interpreter) for t in tagset if t.abi == "abi3"
-            ]
-            if len(pyversions) > 0:
+            if pyversions := [
+                PyVersion.parse_python_tag(t.interpreter)
+                for t in tagset
+                if t.abi == "abi3"
+            ]:
                 return max(pyversions)
 
         # If we're dealing with a standalone shared object (or the above fell through),
